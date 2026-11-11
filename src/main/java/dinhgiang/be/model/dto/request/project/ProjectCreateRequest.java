@@ -13,5 +13,8 @@ public class ProjectCreateRequest {
 
     private String description;
 
+    @NotBlank(message = "Bảng quyền của dự án không được để trống")
+    private Long permissionSchemaId;
+
     private LocalDate endAt;
 }

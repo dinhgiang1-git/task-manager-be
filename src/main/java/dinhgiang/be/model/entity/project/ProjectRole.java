@@ -29,4 +29,7 @@ public class ProjectRole {
     @Column(name = "is_default", nullable = false)
     @Builder.Default
     private Boolean isDefault = false;
+
+    @Column(name = "project_schema_id")
+    private Long projectShemaId;
 }

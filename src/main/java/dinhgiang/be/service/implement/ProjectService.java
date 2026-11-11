@@ -9,7 +9,11 @@ import dinhgiang.be.model.dto.request.project.ProjectCreateRequest;
 import dinhgiang.be.model.dto.request.project.ProjectFilterRequest;
 import dinhgiang.be.model.dto.request.project.ProjectUpdateRequest;
 import dinhgiang.be.model.dto.response.project.ProjectListResponse;
+import dinhgiang.be.model.entity.project.PermissionSchema;
+import dinhgiang.be.model.entity.project.PermissionSchemaGrant;
 import dinhgiang.be.model.entity.project.Project;
+import dinhgiang.be.repository.PermissionSchemaGrantRepository;
+import dinhgiang.be.repository.PermissionSchemaRepository;
 import dinhgiang.be.repository.ProjectRepository;
 import dinhgiang.be.service.interfaces.IProjectService;
 import lombok.RequiredArgsConstructor;
@@ -19,28 +23,59 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ProjectService implements IProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMapping projectMapping;
+    private final PermissionSchemaRepository permissionSchemaRepository;
+    private final PermissionSchemaGrantRepository permissionSchemaGrantRepository;
 
     @Transactional
     public ApiResponse<Void> createProject(ProjectCreateRequest request) {
         Long maxIdProject = projectRepository.getProjectIdMax();
-        String code = "KAN " + maxIdProject + 1;
+        String projectCode = "KAN " + maxIdProject + 1;
 
         Project project = new Project();
-        project.setCode(code);
+        project.setCode(projectCode);
         project.setName(request.getName());
         project.setDescription(request.getDescription());
         project.setEndAt(request.getEndAt());
 
         projectRepository.save(project);
 
-        //Todo: Cần phải khởi tạo bảng quyền theo bảng quyền mặc định
+        PermissionSchema permissionSchema = permissionSchemaRepository.findById(request.getPermissionSchemaId())
+                .orElseThrow(() -> new BusinessException("Bảng quyền dự án không tồn tại"));
+        Long oldPermissionSchemaId = permissionSchema.getId();
+
+        if (permissionSchema.getCode().equals("DEFAULT_SCHEMA")) {
+            permissionSchema = new PermissionSchema();
+            permissionSchema.setCode("P_SCHEMA_" + projectCode);
+            permissionSchema.setName("Bảng quyền dự án " + project.getName());
+
+            permissionSchema = permissionSchemaRepository.saveAndFlush(permissionSchema);
+
+            helperSavedPermissionShemaGrant(permissionSchema, oldPermissionSchemaId);
+        } else {
+            helperSavedPermissionShemaGrant(permissionSchema, oldPermissionSchemaId);
+        }
 
         return ApiResponse.success("Tạo mới dự án thành công");
+    }
+
+    private void helperSavedPermissionShemaGrant(PermissionSchema permissionSchema, Long oldPermissionSchemaId) {
+        List<PermissionSchemaGrant> permissionSchemaGrants = permissionSchemaGrantRepository.findAllByProjectPermissionSchemaId(oldPermissionSchemaId);
+        PermissionSchemaGrant permissionSchemaGrant;
+        for (PermissionSchemaGrant psg : permissionSchemaGrants) {
+            permissionSchemaGrant = new PermissionSchemaGrant();
+            permissionSchemaGrant.setProjectRoleId(psg.getProjectRoleId());
+            permissionSchemaGrant.setProjectPermissionSchemaId(permissionSchema.getId());
+            permissionSchemaGrant.setProjectPermissionId(psg.getProjectPermissionId());
+
+            permissionSchemaGrantRepository.save(permissionSchemaGrant);
+        }
     }
 
     public ApiResponse<PaginationResponse<ProjectListResponse>> getProjects(PaginationRequest<ProjectFilterRequest> request) {
