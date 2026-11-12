@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 public class WorkItemCreateRequest {
@@ -27,5 +28,9 @@ public class WorkItemCreateRequest {
 
     @Column(name = "due_date")
     private LocalDate dueDate;
+
+    private Set<Long> accountIds;
+
+    private Long ownerId;
 
 }

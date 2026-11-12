@@ -43,6 +43,9 @@ public class WorkItem extends BaseEntity {
     @Column(name = "created_by", nullable = false, updatable = false)
     private Long createdBy;
 
+    @Column(name = "owner_id")
+    private Long ownerId;
+
     @Column(name = "work_item_status_id", nullable = false)
     private Long workItemStatusId;
 

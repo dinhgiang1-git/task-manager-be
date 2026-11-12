@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember,Long> {
 
@@ -29,8 +31,14 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember,Lon
         WHERE (:keyword IS NULL 
                         OR LOWER(a.display_name) LIKE LOWER('%' || :keyword || '%')
                         OR LOWER(a.email) LIKE LOWER('%' || :keyword || '%'))
+        AND :projectId = pm.project_id
     """, nativeQuery = true)
     Page<ProjectMemberListResponse> page(
             @Param(value = "keyword") String keyword,
+            @Param(value = "projectId") Long projectId,
             Pageable pageable);
+
+    boolean existsByAccountId(Long accountId);
+
+    List<ProjectMember> findByAccountId(Long accountId);
 }

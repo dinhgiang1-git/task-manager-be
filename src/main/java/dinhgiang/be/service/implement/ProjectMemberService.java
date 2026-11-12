@@ -59,13 +59,17 @@ public class ProjectMemberService implements IProjectMemberService {
     public ApiResponse<PaginationResponse<ProjectMemberListResponse>> getProjectMembers(PaginationRequest<ProjectMemberFilterRequest> request) {
         ProjectMemberFilterRequest filter = request.getFilter();
 
+        Project project = projectRepository.findById(filter.getProjectId())
+                .orElseThrow(() -> new BusinessException("Dự án không tồn tại"));
+
         int pageNow = request.getPageNow();
         int pageSize = request.getPageSize();
         int springPage = (pageNow > 0) ? pageNow - 1 : 0;
         Pageable pageable = PageRequest.of(springPage, pageSize);
         String keyword = (filter.getKeyword() != null) ? filter.getKeyword() : null;
+        Long projectId = project.getId();
 
-        Page<ProjectMemberListResponse> page = projectMemberRepository.page(keyword, pageable);
+        Page<ProjectMemberListResponse> page = projectMemberRepository.page(keyword, projectId, pageable);
 
         PaginationResponse<ProjectMemberListResponse> response = new PaginationResponse<>();
         response.setPageNow(pageNow);

@@ -5,10 +5,7 @@ import dinhgiang.be.model.common.BaseController;
 import dinhgiang.be.model.common.PaginationRequest;
 import dinhgiang.be.model.common.PaginationResponse;
 import dinhgiang.be.model.dto.request.project.*;
-import dinhgiang.be.model.dto.response.project.PermissionSchemaResponse;
-import dinhgiang.be.model.dto.response.project.ProjectListResponse;
-import dinhgiang.be.model.dto.response.project.ProjectPermissionListResponse;
-import dinhgiang.be.model.dto.response.project.ProjectRoleListResponse;
+import dinhgiang.be.model.dto.response.project.*;
 import dinhgiang.be.service.interfaces.IProjectMemberService;
 import dinhgiang.be.service.interfaces.IProjectPermissionService;
 import dinhgiang.be.service.interfaces.IProjectRole;
@@ -96,6 +93,15 @@ public class ProjectController extends BaseController {
     }
 
     //----------Member:
+    @PostMapping(value = "/project-member/assign")
+    @Operation(summary = "Gán người vào dự án")
+    public ResponseEntity<ApiResponse<Void>> assignMemberIntoProject(@Valid @RequestBody ProjectMemberCreateRequest request){
+        return executeApiResult(() -> projectMemberService.assignMemberIntoProject(request));
+    }
+
+    public ResponseEntity<ApiResponse<PaginationResponse<ProjectMemberListResponse>>> getProjectMembers(@RequestBody PaginationRequest<ProjectMemberFilterRequest> request) {
+        return executeApiResult(() ->  projectMemberService.getProjectMembers(request));
+    }
 
     //----------PermissionSchema:
     @GetMapping(value = "permission-schema/get-all")
