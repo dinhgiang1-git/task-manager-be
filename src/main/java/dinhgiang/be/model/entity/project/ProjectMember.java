@@ -32,9 +32,6 @@ public class ProjectMember {
     @Column(name = "join_at", nullable = false)
     private Instant joinAt;
 
-    @Column(name = "left_at")
-    private Instant leftAt;
-
     @Column(name = "added_by", nullable = false)
     private Long addedBy;
 }
