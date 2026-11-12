@@ -9,6 +9,7 @@ import dinhgiang.be.model.dto.response.project.PermissionSchemaResponse;
 import dinhgiang.be.model.dto.response.project.ProjectListResponse;
 import dinhgiang.be.model.dto.response.project.ProjectPermissionListResponse;
 import dinhgiang.be.model.dto.response.project.ProjectRoleListResponse;
+import dinhgiang.be.service.interfaces.IProjectMemberService;
 import dinhgiang.be.service.interfaces.IProjectPermissionService;
 import dinhgiang.be.service.interfaces.IProjectRole;
 import dinhgiang.be.service.interfaces.IProjectService;
@@ -29,6 +30,7 @@ public class ProjectController extends BaseController {
     private final IProjectService projectService;
     private final IProjectPermissionService projectPermissionService;
     private final IProjectRole projectRole;
+    private final IProjectMemberService projectMemberService;
 
     //--------Project:
     @PostMapping(value = "/create")
@@ -99,7 +101,7 @@ public class ProjectController extends BaseController {
     @GetMapping(value = "permission-schema/get-all")
     @Operation(summary = "Danh sách bảng quyền")
     public ResponseEntity<ApiResponse<List<PermissionSchemaResponse>>> getAllPermissionSchemas() {
-        return executeApiResult(projectService::getAllPermissionSchemas);
+        return executeApiResult(projectPermissionService::getAllPermissionSchemas);
     }
 
 

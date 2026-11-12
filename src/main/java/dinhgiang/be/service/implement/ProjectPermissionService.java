@@ -1,12 +1,16 @@
 package dinhgiang.be.service.implement;
 
 import dinhgiang.be.exception.BusinessException;
+import dinhgiang.be.mapper.mapping.PermissionSchemaMapping;
 import dinhgiang.be.mapper.mapping.ProjectPermissionMapping;
 import dinhgiang.be.model.common.ApiResponse;
 import dinhgiang.be.model.dto.request.project.ProjectPermissionCreateRequest;
 import dinhgiang.be.model.dto.request.project.ProjectPermissionUpdateRequest;
+import dinhgiang.be.model.dto.response.project.PermissionSchemaResponse;
 import dinhgiang.be.model.dto.response.project.ProjectPermissionListResponse;
+import dinhgiang.be.model.entity.project.PermissionSchema;
 import dinhgiang.be.model.entity.project.ProjectPermission;
+import dinhgiang.be.repository.PermissionSchemaRepository;
 import dinhgiang.be.repository.ProjectPermissionRepository;
 import dinhgiang.be.service.interfaces.IProjectPermissionService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,8 @@ import java.util.List;
 public class ProjectPermissionService implements IProjectPermissionService {
     private final ProjectPermissionRepository projectPermissionRepository;
     private final ProjectPermissionMapping projectPermissionMapping;
+    private final PermissionSchemaRepository permissionSchemaRepository;
+    private final PermissionSchemaMapping permissionSchemaMapping;
 
     public ApiResponse<Void> createProjectPermission(ProjectPermissionCreateRequest request) {
         if (projectPermissionRepository.existsByCode(request.getCode())) {
@@ -52,5 +58,13 @@ public class ProjectPermissionService implements IProjectPermissionService {
     public ApiResponse<List<ProjectPermissionListResponse>> getProjectPermissions(Long roleId) {
         List<ProjectPermissionListResponse> response = projectPermissionRepository.getProjectPermissions(roleId);
         return ApiResponse.success(response, "Lấy danh sách quyền thành công");
+    }
+
+    public ApiResponse<List<PermissionSchemaResponse>> getAllPermissionSchemas() {
+        List<PermissionSchema> permissionSchemas = permissionSchemaRepository.findAllByIsActive(true);
+
+        List<PermissionSchemaResponse> response = permissionSchemaMapping.toResponseList(permissionSchemas);
+
+        return ApiResponse.success(response, "Lấy danh sách tất cả bảng quyền");
     }
 }
