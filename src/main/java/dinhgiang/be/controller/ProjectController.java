@@ -5,6 +5,7 @@ import dinhgiang.be.model.common.BaseController;
 import dinhgiang.be.model.common.PaginationRequest;
 import dinhgiang.be.model.common.PaginationResponse;
 import dinhgiang.be.model.dto.request.project.*;
+import dinhgiang.be.model.dto.response.project.PermissionSchemaResponse;
 import dinhgiang.be.model.dto.response.project.ProjectListResponse;
 import dinhgiang.be.model.dto.response.project.ProjectPermissionListResponse;
 import dinhgiang.be.model.dto.response.project.ProjectRoleListResponse;
@@ -93,6 +94,13 @@ public class ProjectController extends BaseController {
     }
 
     //----------Member:
+
+    //----------PermissionSchema:
+    @GetMapping(value = "permission-schema/get-all")
+    @Operation(summary = "Danh sách bảng quyền")
+    public ResponseEntity<ApiResponse<List<PermissionSchemaResponse>>> getAllPermissionSchemas() {
+        return executeApiResult(projectService::getAllPermissionSchemas);
+    }
 
 
 }

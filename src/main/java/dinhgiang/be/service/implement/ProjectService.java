@@ -1,6 +1,7 @@
 package dinhgiang.be.service.implement;
 
 import dinhgiang.be.exception.BusinessException;
+import dinhgiang.be.mapper.mapping.PermissionSchemaMapping;
 import dinhgiang.be.mapper.mapping.ProjectMapping;
 import dinhgiang.be.model.common.ApiResponse;
 import dinhgiang.be.model.common.PaginationRequest;
@@ -8,6 +9,7 @@ import dinhgiang.be.model.common.PaginationResponse;
 import dinhgiang.be.model.dto.request.project.ProjectCreateRequest;
 import dinhgiang.be.model.dto.request.project.ProjectFilterRequest;
 import dinhgiang.be.model.dto.request.project.ProjectUpdateRequest;
+import dinhgiang.be.model.dto.response.project.PermissionSchemaResponse;
 import dinhgiang.be.model.dto.response.project.ProjectListResponse;
 import dinhgiang.be.model.entity.project.PermissionSchema;
 import dinhgiang.be.model.entity.project.PermissionSchemaGrant;
@@ -32,6 +34,7 @@ public class ProjectService implements IProjectService {
     private final ProjectMapping projectMapping;
     private final PermissionSchemaRepository permissionSchemaRepository;
     private final PermissionSchemaGrantRepository permissionSchemaGrantRepository;
+    private final PermissionSchemaMapping permissionSchemaMapping;
 
     @Transactional
     public ApiResponse<Void> createProject(ProjectCreateRequest request) {
@@ -108,6 +111,14 @@ public class ProjectService implements IProjectService {
         projectRepository.save(project);
 
         return ApiResponse.success("Cập nhật dự án thành công");
+    }
+
+    public ApiResponse<List<PermissionSchemaResponse>> getAllPermissionSchemas() {
+        List<PermissionSchema> permissionSchemas = permissionSchemaRepository.findAllByIsActive(true);
+
+        List<PermissionSchemaResponse> response = permissionSchemaMapping.toResponseList(permissionSchemas);
+
+        return ApiResponse.success(response, "Lấy danh sách tất cả bảng quyền");
     }
 
 }
