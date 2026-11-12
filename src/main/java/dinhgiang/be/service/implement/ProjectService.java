@@ -11,12 +11,9 @@ import dinhgiang.be.model.dto.request.project.ProjectFilterRequest;
 import dinhgiang.be.model.dto.request.project.ProjectUpdateRequest;
 import dinhgiang.be.model.dto.response.project.PermissionSchemaResponse;
 import dinhgiang.be.model.dto.response.project.ProjectListResponse;
-import dinhgiang.be.model.entity.project.PermissionSchema;
-import dinhgiang.be.model.entity.project.PermissionSchemaGrant;
-import dinhgiang.be.model.entity.project.Project;
-import dinhgiang.be.repository.PermissionSchemaGrantRepository;
-import dinhgiang.be.repository.PermissionSchemaRepository;
-import dinhgiang.be.repository.ProjectRepository;
+import dinhgiang.be.model.entity.project.*;
+import dinhgiang.be.repository.*;
+import dinhgiang.be.security.util.SecurityUtil;
 import dinhgiang.be.service.interfaces.IProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -35,9 +33,12 @@ public class ProjectService implements IProjectService {
     private final PermissionSchemaRepository permissionSchemaRepository;
     private final PermissionSchemaGrantRepository permissionSchemaGrantRepository;
     private final PermissionSchemaMapping permissionSchemaMapping;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectRoleRepository  projectRoleRepository;
 
     @Transactional
     public ApiResponse<Void> createProject(ProjectCreateRequest request) {
+        //Tạo dự án
         Long maxIdProject = projectRepository.getProjectIdMax();
         String projectCode = "KAN " + maxIdProject + 1;
 
@@ -47,8 +48,9 @@ public class ProjectService implements IProjectService {
         project.setDescription(request.getDescription());
         project.setEndAt(request.getEndAt());
 
-        projectRepository.save(project);
+        project = projectRepository.saveAndFlush(project);
 
+        // Gán bảng quyền dự án
         PermissionSchema permissionSchema = permissionSchemaRepository.findById(request.getPermissionSchemaId())
                 .orElseThrow(() -> new BusinessException("Bảng quyền dự án không tồn tại"));
         Long oldPermissionSchemaId = permissionSchema.getId();
@@ -64,6 +66,19 @@ public class ProjectService implements IProjectService {
         } else {
             helperSavedPermissionShemaGrant(permissionSchema, oldPermissionSchemaId);
         }
+
+        //Gán người quản lí dự án
+        ProjectRole projectRole = projectRoleRepository.findByCode("MANAGER")
+                .orElseThrow(() -> new BusinessException("Không tìm thấy vai trò MANAGER"));
+
+        ProjectMember projectMember = new ProjectMember();
+        projectMember.setProjectId(project.getId());
+        projectMember.setAccountId(SecurityUtil.getRequireAccountId());
+        projectMember.setProjectRoleId(projectRole.getId());
+        projectMember.setJoinAt(Instant.now());
+        projectMember.setAddedBy(SecurityUtil.getRequireAccountId());
+
+        projectMemberRepository.saveAndFlush(projectMember);
 
         return ApiResponse.success("Tạo mới dự án thành công");
     }
