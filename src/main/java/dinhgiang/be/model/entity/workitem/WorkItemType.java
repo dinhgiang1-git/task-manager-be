@@ -24,7 +24,11 @@ public class WorkItemType {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private Boolean isActive = false;
+    private Boolean isActive = true;
+
+    @Column(name = "is_default", nullable = false)
+    @Builder.Default
+    private Boolean isDefault = false;
 }

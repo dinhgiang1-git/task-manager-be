@@ -1,14 +1,18 @@
 package dinhgiang.be.initializer;
 
 import dinhgiang.be.initializer.data.project.*;
+import dinhgiang.be.initializer.data.workitem.WorkItemPriorityData;
+import dinhgiang.be.initializer.data.workitem.WorkItemPrioritySeed;
+import dinhgiang.be.initializer.data.workitem.WorkItemTypeData;
+import dinhgiang.be.initializer.data.workitem.WorkItemTypeSeed;
 import dinhgiang.be.model.entity.project.PermissionSchema;
 import dinhgiang.be.model.entity.project.PermissionSchemaGrant;
 import dinhgiang.be.model.entity.project.ProjectPermission;
 import dinhgiang.be.model.entity.project.ProjectRole;
-import dinhgiang.be.repository.PermissionSchemaGrantRepository;
-import dinhgiang.be.repository.PermissionSchemaRepository;
-import dinhgiang.be.repository.ProjectPermissionRepository;
-import dinhgiang.be.repository.ProjectRoleRepository;
+import dinhgiang.be.model.entity.workitem.Priority;
+import dinhgiang.be.model.entity.workitem.WorkItemType;
+import dinhgiang.be.model.enums.WorkItemPriority;
+import dinhgiang.be.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -25,6 +29,8 @@ public class ProjectInitializer implements CommandLineRunner {
     private final ProjectPermissionRepository projectPermissionRepository;
     private final PermissionSchemaRepository  permissionSchemaRepository;
     private final PermissionSchemaGrantRepository permissionSchemaGrantRepository;
+    private final WorkItemTypeRepository workItemTypeRepository;
+    private final WorkItemPriorityRepository workItemPriorityRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -130,6 +136,37 @@ public class ProjectInitializer implements CommandLineRunner {
                     }
                 }
             }
+        }
+
+        //Khởi tạo loại công việc mặc định
+        for (WorkItemTypeSeed seed : WorkItemTypeData.DATA) {
+            if (workItemTypeRepository.existsByCode(seed.getCode())) {
+                log.info("Loại công việc {} đã tồn tại", seed.getCode());
+                continue;
+            }
+            WorkItemType workItemType = new WorkItemType();
+            workItemType.setCode(seed.getCode());
+            workItemType.setDescription(seed.getDescription());
+            workItemType.setIsActive(seed.getIsActive());
+            workItemType.setIsDefault(seed.getIsDefault());
+            workItemTypeRepository.save(workItemType);
+            log.info("Loại công việc mặc định {} được khởi tạo", seed.getCode());
+        }
+
+        //Khởi tạo độ ưu tiên công việc
+        for (WorkItemPrioritySeed seed : WorkItemPriorityData.DATA) {
+            if (workItemPriorityRepository.existsByCode(seed.getCode())) {
+                log.info("Độ ưu tiên {} đã tồn tại",  seed.getCode());
+                continue;
+            }
+            Priority workItemPriority = new Priority();
+            workItemPriority.setCode(seed.getCode());
+            workItemPriority.setName(seed.getName());
+            workItemPriority.setSortOrder(seed.getShortOder());
+            workItemPriority.setIsActive(seed.getIsActive());
+            workItemPriority.setIsDefault(seed.getIsDefault());
+            workItemPriorityRepository.save(workItemPriority);
+            log.info("Độ ưu tiên {} được khởi tạo", seed.getCode());
         }
     }
 }

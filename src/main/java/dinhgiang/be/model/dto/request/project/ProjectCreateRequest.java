@@ -1,6 +1,7 @@
 package dinhgiang.be.model.dto.request.project;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -13,7 +14,7 @@ public class ProjectCreateRequest {
 
     private String description;
 
-    @NotBlank(message = "Bảng quyền của dự án không được để trống")
+    @NotNull(message = "Bảng quyền của dự án không được để trống")
     private Long permissionSchemaId;
 
     private LocalDate endAt;

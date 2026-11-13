@@ -2,7 +2,11 @@ package dinhgiang.be.service.implement;
 
 import dinhgiang.be.exception.BusinessException;
 import dinhgiang.be.model.common.ApiResponse;
+import dinhgiang.be.model.common.PaginationRequest;
+import dinhgiang.be.model.common.PaginationResponse;
 import dinhgiang.be.model.dto.request.workitem.WorkItemCreateRequest;
+import dinhgiang.be.model.dto.request.workitem.WorkItemFilterRequest;
+import dinhgiang.be.model.dto.response.workitem.WorkItemListResponse;
 import dinhgiang.be.model.entity.account.Account;
 import dinhgiang.be.model.entity.project.Project;
 import dinhgiang.be.model.entity.workitem.Priority;
@@ -13,11 +17,14 @@ import dinhgiang.be.repository.*;
 import dinhgiang.be.security.util.SecurityUtil;
 import dinhgiang.be.service.interfaces.IWorkItemService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +75,9 @@ public class WorkItemService implements IWorkItemService {
 
         //Nếu loại công việc là EPIC thì có người phụ trách
         if (workItemType.getCode().equals("EPIC")) {
+            if (request.getOwnerId() == null) {
+                throw new BusinessException("EPIC bắt buộc phải có người phụ trách");
+            }
             Account account = accountRepository.findById(request.getOwnerId())
                     .orElseThrow(() -> new BusinessException("Tài khoản Owner không tồn tại"));
             if (!projectMemberRepository.existsByAccountId(account.getId())) throw new BusinessException("Tài khoản không thuộc dự án");
@@ -78,7 +88,11 @@ public class WorkItemService implements IWorkItemService {
         workItem = workItemRepository.saveAndFlush(workItem);
 
         // Gán người vào công việc
-        Set<Long> accountIds = request.getAccountIds();
+        Set<Long> accountIds = request.getAccountIds() == null
+                ? Set.of()
+                : request.getAccountIds().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
         List<Account> accounts = accountRepository.findAllById(accountIds);
         WorkItemAssignment workItemAssignment;
         for (Account account : accounts) {
@@ -96,6 +110,72 @@ public class WorkItemService implements IWorkItemService {
         }
 
         return ApiResponse.success("Tạo mới thành công công việc");
+    }
+
+    //Lấy công việc theo dự án
+    public ApiResponse<PaginationResponse<WorkItemListResponse>> getWorkItems(PaginationRequest<WorkItemFilterRequest> request) {
+        WorkItemFilterRequest filter = request.getFilter();
+
+        int pageSize = request.getPageSize();
+        int pageNow = request.getPageNow();
+        int springPage = (pageNow > 0) ? pageNow -1 : 0;
+
+        Pageable pageable = PageRequest.of(springPage, pageSize);
+        Long projectId = filter.getProjectId();
+        String keyword = filter.getKeyword();
+        Page<WorkItemListResponse> page = workItemRepository.page(projectId, keyword, pageable);
+
+        List<WorkItemListResponse> treeData = buildTreeWorkItems(page.getContent());
+
+        PaginationResponse<WorkItemListResponse> response = new PaginationResponse<>();
+        response.setPageNow(pageNow);
+        response.setPageSize(pageSize);
+        response.setTotalPages(page.getTotalPages());
+        response.setTotalElements(page.getTotalElements());
+        response.setData(treeData);
+
+        return ApiResponse.success(response, "Lấy danh sách công việc thành công");
+    }
+
+    //--------Helper build tree
+    private List<WorkItemListResponse> buildTreeWorkItems(List<WorkItemListResponse> workItems) {
+        Map<Long, WorkItemListResponse> nodes = new LinkedHashMap<>();
+
+        //Tạo node cho tất cả công việc
+        for (WorkItemListResponse workItem : workItems) {
+            WorkItemListResponse node = new WorkItemListResponse();
+            node.setId(workItem.getId());
+            node.setProjectId(workItem.getProjectId());
+            node.setWorkItemCode(workItem.getWorkItemCode());
+            node.setTitle(workItem.getTitle());
+            node.setParentId(workItem.getParentId());
+            node.setDueDate(workItem.getDueDate());
+            node.setOwnerId(workItem.getOwnerId());
+
+            node.setWorkItemTypeId(workItem.getWorkItemTypeId());
+            node.setWorkItemTypeCode(workItem.getWorkItemTypeCode());
+
+            node.setPriorityId(workItem.getPriorityId());
+            node.setPriorityCode(workItem.getPriorityCode());
+            node.setPriorityName(workItem.getPriorityName());
+
+            node.setWorkItemStatusId(workItem.getWorkItemStatusId());
+            node.setWorkItemStatusCode(workItem.getWorkItemStatusCode());
+
+            nodes.put(workItem.getId(), node);
+        }
+
+        List<WorkItemListResponse> roots = new ArrayList<>();
+        for (WorkItemListResponse node : nodes.values()) {
+            WorkItemListResponse parent = nodes.get(node.getParentId());
+
+            if (parent != null) {
+                parent.getChildren().add(node);
+            } else {
+                roots.add(node);
+            }
+        }
+        return roots;
     }
 
 

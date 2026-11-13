@@ -48,6 +48,12 @@ public class ProjectController extends BaseController {
         return executeApiResult(() ->  projectService.updateProject(request));
     }
 
+    @GetMapping("/get")
+    @Operation(summary = "Lấy chi tiết dự án")
+    public ResponseEntity<ApiResponse<ProjectDetailResponse>> getProjectDetail(@RequestParam(value = "id") Long id) {
+        return executeApiResult(() -> projectService.getDetailProject(id));
+    }
+
     //---------Permission:
     @PostMapping(value = "/permissions/create")
     @Operation(summary = "Tạo mới quyền")

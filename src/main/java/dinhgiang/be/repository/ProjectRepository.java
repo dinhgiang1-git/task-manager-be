@@ -1,6 +1,7 @@
 package dinhgiang.be.repository;
 
 import dinhgiang.be.model.dto.response.account.AccountListResponse;
+import dinhgiang.be.model.dto.response.project.ProjectDetailResponse;
 import dinhgiang.be.model.dto.response.project.ProjectListResponse;
 import dinhgiang.be.model.entity.project.Project;
 import org.springframework.data.domain.Page;
@@ -37,4 +38,30 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             @Param(value = "keyword") String keyword,
             Pageable pageable
     );
+
+    @Query(value = """
+        SELECT
+                p.id as "id",
+                p.code as "code",
+                p.name as "name",
+                p.description as "description",
+                p.end_at as "endAt",
+                    
+                ps.id as "projectSchemaId",
+                ps.code as "projectShemaCode",
+                ps.name as "projectSchemaName",
+                
+                a.id as "managerId",
+                a.display_name as "managerName"
+                    
+        FROM projects p
+        LEFT JOIN permission_schemas ps ON ps.id = p.project_schema_id
+        LEFT JOIN project_members pm ON pm.project_id = p.id
+        LEFT JOIN accounts a ON a.id = pm.account_id
+        WHERE p.id = :id 
+        AND pm.id = :roleId
+    """, nativeQuery = true)
+    ProjectDetailResponse getProjectDetailById(
+            @Param(value = "id") Long id,
+            @Param(value = "roleId") Long roleId);
 }

@@ -1,5 +1,6 @@
 package dinhgiang.be.model.common;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
@@ -17,5 +18,6 @@ public class PaginationRequest<TFilter> {
     @Max(value = MAX_PAGE_SIZE, message = "Page size cannot exceed " + MAX_PAGE_SIZE)
     private int pageSize = DEFAULT_PAGE_SIZE;
 
+    @Valid
     private TFilter filter;
 }

@@ -8,6 +8,7 @@ import dinhgiang.be.model.common.PaginationResponse;
 import dinhgiang.be.model.dto.request.project.ProjectCreateRequest;
 import dinhgiang.be.model.dto.request.project.ProjectFilterRequest;
 import dinhgiang.be.model.dto.request.project.ProjectUpdateRequest;
+import dinhgiang.be.model.dto.response.project.ProjectDetailResponse;
 import dinhgiang.be.model.dto.response.project.ProjectListResponse;
 import dinhgiang.be.model.entity.project.*;
 import dinhgiang.be.repository.*;
@@ -123,6 +124,15 @@ public class ProjectService implements IProjectService {
         projectRepository.save(project);
 
         return ApiResponse.success("Cập nhật dự án thành công");
+    }
+
+    public ApiResponse<ProjectDetailResponse> getDetailProject(Long id) {
+        ProjectRole projectRole = projectRoleRepository.findByCode("MANAGER")
+                .orElseThrow(() -> new BusinessException("Vai trò MANAGER không tồn tại"));
+
+        ProjectDetailResponse response = projectRepository.getProjectDetailById(id, projectRole.getId());
+
+        return ApiResponse.success(response, "Lấy chi tiết dự án thành công");
     }
 
 }

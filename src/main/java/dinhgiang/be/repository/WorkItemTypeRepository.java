@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface WorkItemTypeRepository extends JpaRepository<WorkItemType, Long> {
+    boolean existsByCode(String code);
 }

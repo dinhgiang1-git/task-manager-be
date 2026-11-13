@@ -25,10 +25,14 @@ public class Priority {
     private String name;
 
     @Column(name = "sort_order", nullable = false)
-    private Short sortOrder;
+    private Long sortOrder;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private boolean active = true;
+    private Boolean isActive = true;
+
+    @Column(name = "is_default", nullable = false)
+    @Builder.Default
+    private Boolean isDefault = false;
 
 }
