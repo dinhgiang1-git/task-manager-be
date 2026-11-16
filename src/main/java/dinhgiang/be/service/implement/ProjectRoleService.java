@@ -69,8 +69,9 @@ public class ProjectRoleService implements IProjectRole {
         Pageable pageable = PageRequest.of(springPage, pageSize);
         String keyword = (filter.getKeyword() != null) ? filter.getKeyword() : null;
         Boolean isActive = (filter.getIsActive() != null) ? filter.getIsActive() : null;
+        Long projectId = filter.getProjectId();
 
-        Page<ProjectRoleListResponse> page = projectRoleRepository.getProjectRoles(keyword, isActive, pageable);
+        Page<ProjectRoleListResponse> page = projectRoleRepository.getProjectRoles(keyword, isActive, projectId, pageable);
 
         PaginationResponse<ProjectRoleListResponse> response = new PaginationResponse<>();
         response.setPageNow(pageNow);

@@ -4,8 +4,11 @@ import dinhgiang.be.model.common.ApiResponse;
 import dinhgiang.be.model.common.BaseController;
 import dinhgiang.be.model.common.PaginationRequest;
 import dinhgiang.be.model.common.PaginationResponse;
+import dinhgiang.be.model.dto.request.workitem.MyWorkItemFilterRequest;
+import dinhgiang.be.model.dto.request.workitem.WorkItemAssignRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemCreateRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemFilterRequest;
+import dinhgiang.be.model.dto.response.workitem.MyWorkItemListResponse;
 import dinhgiang.be.model.dto.response.workitem.WorkItemListResponse;
 import dinhgiang.be.service.interfaces.IWorkItemService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,5 +38,17 @@ public class WorkItemController extends BaseController {
     @Operation(summary = "Lấy danh sách công việc theo dự án")
     public ResponseEntity<ApiResponse<PaginationResponse<WorkItemListResponse>>> getWorkItems(@Valid @RequestBody PaginationRequest<WorkItemFilterRequest> request) {
         return executeApiResult(() -> workItemService.getWorkItems(request));
+    }
+
+    @PostMapping(value = "/my-tasks")
+    @Operation(summary = "Lấy danh sách công việc của tôi")
+    public ResponseEntity<ApiResponse<PaginationResponse<MyWorkItemListResponse>>> getMyWorkItems(@Valid @RequestBody PaginationRequest<MyWorkItemFilterRequest> request) {
+        return executeApiResult(() -> workItemService.getMyWorkItem(request));
+    }
+
+    @PostMapping(value = "/assgin")
+    @Operation(summary = "Gán thành viên vào công việc")
+    public ResponseEntity<ApiResponse<Void>> assignWorkItem(@Valid @RequestBody WorkItemAssignRequest request){
+        return executeApiResult(() -> workItemService.assignWorkItem(request));
     }
 }

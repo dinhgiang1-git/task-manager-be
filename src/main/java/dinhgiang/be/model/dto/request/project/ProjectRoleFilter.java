@@ -6,4 +6,5 @@ import lombok.Data;
 public class ProjectRoleFilter {
     private String keyword;
     private Boolean isActive;
+    private Long projectId;
 }

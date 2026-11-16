@@ -4,8 +4,11 @@ import dinhgiang.be.exception.BusinessException;
 import dinhgiang.be.model.common.ApiResponse;
 import dinhgiang.be.model.common.PaginationRequest;
 import dinhgiang.be.model.common.PaginationResponse;
+import dinhgiang.be.model.dto.request.workitem.MyWorkItemFilterRequest;
+import dinhgiang.be.model.dto.request.workitem.WorkItemAssignRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemCreateRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemFilterRequest;
+import dinhgiang.be.model.dto.response.workitem.MyWorkItemListResponse;
 import dinhgiang.be.model.dto.response.workitem.WorkItemListResponse;
 import dinhgiang.be.model.entity.account.Account;
 import dinhgiang.be.model.entity.project.Project;
@@ -21,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
@@ -176,6 +180,80 @@ public class WorkItemService implements IWorkItemService {
             }
         }
         return roots;
+    }
+
+    //Lấy công việc của tôi
+    public ApiResponse<PaginationResponse<MyWorkItemListResponse>> getMyWorkItem(PaginationRequest<MyWorkItemFilterRequest> request) {
+        MyWorkItemFilterRequest filter = request.getFilter();
+
+        int pageSize = request.getPageSize();
+        int pageNow = request.getPageNow();
+        int springPage = (pageNow > 0) ? pageNow - 1 : 0;
+        Pageable pageable = PageRequest.of(springPage, pageSize);
+        Long accountId = SecurityUtil.getRequireAccountId();
+
+        Page<MyWorkItemListResponse> page = workItemRepository.myWorkItemPage(accountId, filter.getKeyword(), pageable);
+
+        PaginationResponse<MyWorkItemListResponse> response = new PaginationResponse<>();
+        response.setPageNow(pageNow);
+        response.setPageSize(pageSize);
+        response.setTotalPages(page.getTotalPages());
+        response.setTotalElements(page.getTotalElements());
+        response.setData(page.getContent());
+        return ApiResponse.success(response, "Lấy danh sách công việc của tôi thành công");
+    }
+
+    //Gàn người vào công việc
+    @Transactional
+    public ApiResponse<Void> assignWorkItem(WorkItemAssignRequest request) {
+        WorkItem workItem = workItemRepository.findById(request.getWorkItemId())
+                .orElseThrow(() -> new BusinessException("Công việc không tồn tại"));
+
+        Set<Long> targetAccountIds = request.getAccountId().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (!targetAccountIds.isEmpty()) {
+            List<Account> accounts = accountRepository.findAllById(targetAccountIds);
+            if (accounts.size() != targetAccountIds.size()) {
+                throw new BusinessException("Có tài khoản không tồn tại");
+            }
+            for (Account account : accounts) {
+                if (!projectMemberRepository.existsByAccountIdAndProjectId(account.getId(), workItem.getProjectId())) {
+                    throw new BusinessException("Tài khoản không thuộc dự án");
+                }
+            }
+        }
+
+        Set<Long> currentAccountIds = workItemAssignmentRepository.findAllByWorkItemId(workItem.getId());
+
+        Set<Long> toRemove = currentAccountIds.stream()
+                .filter(id -> !targetAccountIds.contains(id))
+                .collect(Collectors.toSet());
+        if (!toRemove.isEmpty()) {
+            workItemAssignmentRepository.deleteByWorkItemIdAndAccountIdIn(workItem.getId(), toRemove);
+        }
+
+        Set<Long> toAdd = targetAccountIds.stream()
+                .filter(id -> !currentAccountIds.contains(id))
+                .collect(Collectors.toSet());
+        if (!toAdd.isEmpty()) {
+            Long statusDefaultId = workItemStatusRepository.findByCode("NOT_STARTED")
+                    .orElseThrow(() -> new BusinessException("Trạng thái khởi tạo dự án không tồn tại"));
+
+            List<WorkItemAssignment> toSave = new ArrayList<>();
+            for (Long accountId : toAdd) {
+                WorkItemAssignment assignment = new WorkItemAssignment();
+                assignment.setWorkItemId(workItem.getId());
+                assignment.setAccountId(accountId);
+                assignment.setWorkItemStatusId(statusDefaultId);
+                assignment.setStartedAt(Instant.now());
+                toSave.add(assignment);
+            }
+
+            workItemAssignmentRepository.saveAll(toSave);
+        }
+        return ApiResponse.success("Gán người vào công việc thành công");
     }
 
 

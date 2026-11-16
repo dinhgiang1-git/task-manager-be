@@ -87,7 +87,7 @@ public class ProjectController extends BaseController {
     }
 
     @PostMapping(value = "/roles/gets")
-    @Operation(summary = "Lấy danh sách vai trò")
+    @Operation(summary = "Lấy danh sách vai trò theo dự án")
     public ResponseEntity<ApiResponse<PaginationResponse<ProjectRoleListResponse>>> getProjectRoles(@RequestBody PaginationRequest<ProjectRoleFilter> request){
         return executeApiResult(() -> projectRole.getProjectRoles(request));
     }
