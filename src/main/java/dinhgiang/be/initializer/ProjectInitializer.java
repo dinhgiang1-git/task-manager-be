@@ -11,7 +11,6 @@ import dinhgiang.be.model.entity.project.ProjectPermission;
 import dinhgiang.be.model.entity.project.ProjectRole;
 import dinhgiang.be.model.entity.workitem.Priority;
 import dinhgiang.be.model.entity.workitem.WorkItemType;
-import dinhgiang.be.model.enums.WorkItemPriority;
 import dinhgiang.be.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

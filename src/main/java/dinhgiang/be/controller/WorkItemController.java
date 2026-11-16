@@ -9,6 +9,7 @@ import dinhgiang.be.model.dto.request.workitem.WorkItemAssignRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemCreateRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemFilterRequest;
 import dinhgiang.be.model.dto.response.workitem.MyWorkItemListResponse;
+import dinhgiang.be.model.dto.response.workitem.UpdateWorkItemStatusRequest;
 import dinhgiang.be.model.dto.response.workitem.WorkItemListResponse;
 import dinhgiang.be.service.interfaces.IWorkItemService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,7 +49,13 @@ public class WorkItemController extends BaseController {
 
     @PostMapping(value = "/assgin")
     @Operation(summary = "Gán thành viên vào công việc")
-    public ResponseEntity<ApiResponse<Void>> assignWorkItem(@Valid @RequestBody WorkItemAssignRequest request){
+    public ResponseEntity<ApiResponse<Void>> assignWorkItem(@Valid @RequestBody WorkItemAssignRequest request) {
         return executeApiResult(() -> workItemService.assignWorkItem(request));
+    }
+
+    @PostMapping(value = "/status-update")
+    @Operation(summary = "Cập nhật trạng thái công việc")
+    public ResponseEntity<ApiResponse<Void>> updateWorkItemStatus(@Valid @RequestBody UpdateWorkItemStatusRequest request) {
+        return executeApiResult(() -> workItemService.updateWorkItemStatus(request));
     }
 }

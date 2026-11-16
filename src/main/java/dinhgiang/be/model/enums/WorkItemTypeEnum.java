@@ -1,6 +1,6 @@
 package dinhgiang.be.model.enums;
 
-public enum WorkItemType {
+public enum WorkItemTypeEnum {
     EPIC,
     STORY,
     TASK,

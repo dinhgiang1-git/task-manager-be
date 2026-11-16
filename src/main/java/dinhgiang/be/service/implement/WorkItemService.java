@@ -9,13 +9,13 @@ import dinhgiang.be.model.dto.request.workitem.WorkItemAssignRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemCreateRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemFilterRequest;
 import dinhgiang.be.model.dto.response.workitem.MyWorkItemListResponse;
+import dinhgiang.be.model.dto.response.workitem.UpdateWorkItemStatusRequest;
 import dinhgiang.be.model.dto.response.workitem.WorkItemListResponse;
 import dinhgiang.be.model.entity.account.Account;
 import dinhgiang.be.model.entity.project.Project;
-import dinhgiang.be.model.entity.workitem.Priority;
-import dinhgiang.be.model.entity.workitem.WorkItem;
-import dinhgiang.be.model.entity.workitem.WorkItemAssignment;
-import dinhgiang.be.model.entity.workitem.WorkItemType;
+import dinhgiang.be.model.entity.workitem.*;
+import dinhgiang.be.model.enums.WorkItemStatusEnum;
+import dinhgiang.be.model.enums.WorkItemTypeEnum;
 import dinhgiang.be.repository.*;
 import dinhgiang.be.security.util.SecurityUtil;
 import dinhgiang.be.service.interfaces.IWorkItemService;
@@ -41,6 +41,7 @@ public class WorkItemService implements IWorkItemService {
     private final AccountRepository accountRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final WorkItemAssignmentRepository workItemAssignmentRepository;
+    private final StatusCalculatorService statusCalculatorService;
 
     public ApiResponse<Void> createWorkItem(WorkItemCreateRequest request) {
         Project project = projectRepository.findById(request.getProjectId())
@@ -254,6 +255,40 @@ public class WorkItemService implements IWorkItemService {
             workItemAssignmentRepository.saveAll(toSave);
         }
         return ApiResponse.success("Gán người vào công việc thành công");
+    }
+
+    public ApiResponse<Void> updateWorkItemStatus(UpdateWorkItemStatusRequest request) {
+        WorkItem workItem = workItemRepository.findById(request.getWorkItemId())
+                .orElseThrow(() -> new BusinessException("Công việc không tồn tại"));
+
+        if (workItem.isClosed() || workItem.getArchivedAt() != null) {
+            throw new BusinessException("Không thể cập nhật trạng thái cho công việc đã đóng hoặc lưu trữ");
+        }
+
+        WorkItemStatus newWorkItemStatus = workItemStatusRepository.findById(request.getWorkItemStatusId())
+                .orElseThrow(() -> new BusinessException("Trạng thái công việc không tồn tại"));
+
+        if ("CLOSED".equals(newWorkItemStatus.getCode())) {
+            throw new BusinessException("Vui lòng chọn chức năng đóng công việc");
+        }
+
+        WorkItemAssignment workItemAssignment = workItemAssignmentRepository
+                .findByWorkItemIdAndAccountId(workItem.getId(), SecurityUtil.getRequireAccountId())
+                .orElseThrow(() -> new BusinessException("Bạn không được phân công vào công việc này"));
+
+        workItemAssignment.setWorkItemStatusId(newWorkItemStatus.getId());
+        if (WorkItemStatusEnum.IN_PROGRESS.toString().equals(newWorkItemStatus.getCode()) && workItemAssignment.getStartedAt() == null) {
+            workItemAssignment.setStartedAt(Instant.now());
+        }
+        if (WorkItemStatusEnum.DONE.toString().equals(newWorkItemStatus.getCode())) {
+            workItemAssignment.setCompletedAt(Instant.now());
+        }
+
+        workItemAssignmentRepository.saveAndFlush(workItemAssignment);
+
+        statusCalculatorService.recalculateStatus(workItem.getId());
+
+        return ApiResponse.success("Cập nhật traạng thái công việc thành công");
     }
 
 
