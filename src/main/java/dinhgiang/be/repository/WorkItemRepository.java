@@ -117,4 +117,16 @@ public interface WorkItemRepository extends JpaRepository<WorkItem, Long> {
             @Param(value = "accountId") Long accountId,
             @Param(value = "keyword") String keyword,
             Pageable pageable);
+
+    @Query(value = """
+        SELECT
+                wia.work_item_id
+        FROM work_item_assignment wia
+        LEFT JOIN work_items wi ON wi.id = wia.work_item_id
+        WHERE wi.project_id = :projectId
+        AND wia.account_id = :accountId
+    """, nativeQuery = true)
+    List<Long> getAssignedWorkItemIds(
+            @Param(value = "accountId") Long accountId,
+            @Param(value = "projectId") Long projectId);
 }

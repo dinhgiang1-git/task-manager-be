@@ -15,6 +15,7 @@ public class ProjectDetailResponse {
     private String name;
     private String description;
     private LocalDate endAt;
+    private LocalDate createdAt;
 
     private Long projectSchemaId;
     private String projectSchemaCode;

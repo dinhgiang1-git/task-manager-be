@@ -30,6 +30,6 @@ public class ProjectRole {
     @Builder.Default
     private Boolean isDefault = false;
 
-    @Column(name = "project_schema_id")
+    @Column(name = "project_schema_id", nullable = false)
     private Long projectShemaId;
 }

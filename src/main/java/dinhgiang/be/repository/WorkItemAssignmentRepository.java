@@ -27,4 +27,6 @@ public interface WorkItemAssignmentRepository extends JpaRepository<WorkItemAssi
     void deleteByWorkItemIdAndAccountIdIn(Long workItemId, Collection<Long> accountIds);
 
     Optional<WorkItemAssignment> findByWorkItemIdAndAccountId(Long workItemId, Long accountId);
+
+    void deleteByWorkItemIdInAndAccountId(Collection<Long> workItemIds, Long accountId);
 }

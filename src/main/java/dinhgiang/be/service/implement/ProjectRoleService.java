@@ -11,8 +11,10 @@ import dinhgiang.be.model.dto.request.project.ProjectRoleFilter;
 import dinhgiang.be.model.dto.request.project.ProjectRoleUpdateRequest;
 import dinhgiang.be.model.dto.response.project.ProjectRoleListResponse;
 import dinhgiang.be.model.entity.project.PermissionSchemaGrant;
+import dinhgiang.be.model.entity.project.Project;
 import dinhgiang.be.model.entity.project.ProjectRole;
 import dinhgiang.be.repository.ProjectPermissionSchemaGrantRepository;
+import dinhgiang.be.repository.ProjectRepository;
 import dinhgiang.be.repository.ProjectRoleRepository;
 import dinhgiang.be.service.interfaces.IProjectRole;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +29,15 @@ public class ProjectRoleService implements IProjectRole {
     private final ProjectRoleRepository projectRoleRepository;
     private final ProjectRoleMapping projectRoleMapping;
     private final ProjectPermissionSchemaGrantRepository projectPermissionSchemaGrantRepository;
+    private final ProjectRepository projectRepository;
 
     public ApiResponse<Void> createProjectRole(ProjectRoleCreateRequest request) {
         if (projectRoleRepository.existsByCode(request.getCode())) {
             throw new BusinessException("Mã vai trò đã tồn tại");
         }
+
+        Project project = projectRepository.findById(request.getProjectId())
+                .orElseThrow(() -> new BusinessException("Dự án không tồn tại"));
 
         ProjectRole projectRole = new ProjectRole();
         projectRole.setCode(request.getCode());
@@ -39,6 +45,7 @@ public class ProjectRoleService implements IProjectRole {
         if (request.getIsActive() != null) {
             projectRole.setIsActive(request.getIsActive());
         }
+        projectRole.setProjectShemaId(project.getProjectSchemaId());
 
         projectRoleRepository.save(projectRole);
 

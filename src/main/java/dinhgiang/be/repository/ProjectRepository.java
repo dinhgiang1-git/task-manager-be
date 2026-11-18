@@ -25,9 +25,18 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
                 p.code as "code",
                 p.name as "name",
                 p.description as "description",
-                p.end_at as "endAt"
+                p.end_at as "endAt",
+                
+                a.id as "managerId",
+                a.display_name as "managerName",
+                a.email as "managerEmail"                    
         FROM projects p
-        WHERE (:keyword IS NULL OR LOWER(p.code) LIKE LOWER('%' || :keyword ||'%'))
+        LEFT JOIN project_members pm ON pm.project_id = p.id
+        LEFT JOIN project_roles pr ON pr.id = pm.project_role_id
+        LEFT JOIN accounts a ON a.id = pm.account_id
+        WHERE (:keyword IS NULL 
+                       OR LOWER(p.code) LIKE LOWER('%' || :keyword ||'%'))
+        AND pr.code = :codeProjectRole
     """, countQuery = """
         SELECT
                 COUNT(*)
@@ -36,6 +45,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     """, nativeQuery = true)
     Page<ProjectListResponse> getProjects(
             @Param(value = "keyword") String keyword,
+            @Param(value = "codeProjectRole") String codeProjectRole,
             Pageable pageable
     );
 
@@ -46,6 +56,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
                 p.name as "name",
                 p.description as "description",
                 p.end_at as "endAt",
+                p.create_at as "createAt",
                     
                 ps.id as "projectSchemaId",
                 ps.code as "projectShemaCode",
@@ -58,8 +69,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         LEFT JOIN permission_schemas ps ON ps.id = p.project_schema_id
         LEFT JOIN project_members pm ON pm.project_id = p.id
         LEFT JOIN accounts a ON a.id = pm.account_id
-        WHERE p.id = :id 
-        AND pm.id = :roleId
+        WHERE p.id = :id AND pm.id = :roleId
+        ORDER BY p.id DESC
     """, nativeQuery = true)
     ProjectDetailResponse getProjectDetailById(
             @Param(value = "id") Long id,

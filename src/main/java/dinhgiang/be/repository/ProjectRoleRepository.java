@@ -22,21 +22,27 @@ public interface ProjectRoleRepository extends JpaRepository<ProjectRole, Long> 
             pr.is_active as "isActive"
         FROM project_roles pr
         LEFT JOIN permission_schema_grants psg ON psg.project_role_id = pr.id
-        LEFT JOIN projects p ON p.project_schema_id = psg.project_permission_schema_id
-            AND p.id = :projectId
-        WHERE (:keyword IS NULL
-               OR LOWER(pr.code) LIKE LOWER('%' || :keyword || '%')
-               OR LOWER(pr.name) LIKE LOWER('%' || :keyword || '%'))
-        ORDER BY pr.id ASC
+        LEFT JOIN projects p ON (
+            p.project_schema_id = psg.project_permission_schema_id 
+            OR p.project_schema_id = pr.project_schema_id
+            OR pr.is_default = TRUE)
+        WHERE (:projectId IS NULL OR p.id = :projectId)
+          AND (:keyword IS NULL OR LOWER(pr.code) LIKE LOWER('%' || :keyword ||'%')
+              OR LOWER(pr.name) LIKE LOWER('%' || :keyword ||'%'))
+          AND (:isActive IS NULL OR pr.is_active = :isActive)
+        ORDER BY pr.id
     """, countQuery = """
         SELECT COUNT(DISTINCT pr.id)
         FROM project_roles pr
         LEFT JOIN permission_schema_grants psg ON psg.project_role_id = pr.id
-        LEFT JOIN projects p ON p.project_schema_id = psg.project_permission_schema_id
-            AND p.id = :projectId
-        WHERE (:keyword IS NULL
-               OR LOWER(pr.code) LIKE LOWER('%' || :keyword || '%')
-               OR LOWER(pr.name) LIKE LOWER('%' || :keyword || '%'))
+        LEFT JOIN projects p ON (
+            p.project_schema_id = psg.project_permission_schema_id 
+            OR p.project_schema_id = pr.project_schema_id
+            OR pr.is_default = TRUE)
+        WHERE (:projectId IS NULL OR p.id = :projectId)
+          AND (:keyword IS NULL OR LOWER(pr.code) LIKE LOWER('%' || :keyword || '%')
+              OR LOWER(pr.name) LIKE LOWER('%' || :keyword || '%'))
+          AND (:isActive IS NULL OR pr.is_active = :isActive)
     """, nativeQuery = true)
     Page<ProjectRoleListResponse> getProjectRoles(
             @Param(value = "keyword") String keyword,

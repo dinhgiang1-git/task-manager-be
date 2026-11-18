@@ -92,21 +92,37 @@ public class ProjectController extends BaseController {
         return executeApiResult(() -> projectRole.getProjectRoles(request));
     }
 
-    @PostMapping(value = "/roles/assign-permssion")
+    @PostMapping(value = "/roles/assign-permission")
     @Operation(summary = "Gán quyền vào vai trò")
     public ResponseEntity<ApiResponse<Void>> assignPermissionIntoRole(@Valid @RequestBody AssignPermissionIntoRoleRequest request){
         return executeApiResult(() -> projectRole.assignPermissionIntoRole(request));
     }
 
     //----------Member:
-    @PostMapping(value = "/project-member/assign")
+    @PostMapping(value = "members/assign")
     @Operation(summary = "Gán người vào dự án")
-    public ResponseEntity<ApiResponse<Void>> assignMemberIntoProject(@Valid @RequestBody ProjectMemberCreateRequest request){
+    public ResponseEntity<ApiResponse<Void>> assignMemberIntoProject(@Valid @RequestBody ProjectMemberCreateRequest request) {
         return executeApiResult(() -> projectMemberService.assignMemberIntoProject(request));
     }
 
+    @PostMapping(value = "/members/gets")
+    @Operation(summary = "Lấy danh sách thành viên của dự án")
     public ResponseEntity<ApiResponse<PaginationResponse<ProjectMemberListResponse>>> getProjectMembers(@RequestBody PaginationRequest<ProjectMemberFilterRequest> request) {
         return executeApiResult(() ->  projectMemberService.getProjectMembers(request));
+    }
+
+    @DeleteMapping(value = "/members/remove")
+    @Operation(summary = "Xoá thành viên khỏi dự án")
+    public ResponseEntity<ApiResponse<Void>> removeMember(
+            @RequestParam(value = "accountId") Long accountId,
+            @RequestParam(value = "projectId") Long projectId) {
+        return executeApiResult(() -> projectMemberService.removeMemberFromProject(accountId, projectId));
+    }
+
+    @PutMapping(value = "members/update")
+    @Operation(summary = "Cập nhật thông tin thành viên dự án")
+    public ResponseEntity<ApiResponse<Long>> updateMember(@Valid @RequestBody ProjectMemberUpdateRequest request){
+        return executeApiResult(() -> projectMemberService.updateProjectMember(request));
     }
 
     //----------PermissionSchema:

@@ -17,4 +17,9 @@ public class ProjectMemberListResponse {
     private String username;
     private String displayName;
     private String email;
+
+    //ProjectRole:
+    private Long projectRoleId;
+    private String projectRoleCode;
+    private String projectRoleName;
 }

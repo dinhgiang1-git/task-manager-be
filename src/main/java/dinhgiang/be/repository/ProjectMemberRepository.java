@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember,Long> {
@@ -24,10 +24,15 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember,Lon
                 a.id as "accountId",
                 a.username as "username",
                 a.display_name as "displayName",
-                a.email as "email"
+                a.email as "email",
+                    
+                pr.id as "projectRoleId",
+                pr.code as "projectRoleCode",
+                pr.name as "projectRoleName"
             
         FROM project_members pm
         LEFT JOIN accounts a ON a.id = pm.account_id
+        LEFT JOIN project_roles pr ON pr.id = pm.project_role_id 
         WHERE (:keyword IS NULL 
                         OR LOWER(a.display_name) LIKE LOWER('%' || :keyword || '%')
                         OR LOWER(a.email) LIKE LOWER('%' || :keyword || '%'))
@@ -40,7 +45,9 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember,Lon
 
     boolean existsByAccountId(Long accountId);
 
-    List<ProjectMember> findByAccountId(Long accountId);
+    Optional<ProjectMember> findByAccountId(Long accountId);
 
     boolean existsByAccountIdAndProjectId(Long accountId, Long projectId);
+
+    Optional<ProjectMember> findByAccountIdAndProjectId(Long accountId, Long projectId);
 }

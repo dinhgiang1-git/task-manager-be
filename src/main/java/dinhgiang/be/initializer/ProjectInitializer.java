@@ -34,8 +34,23 @@ public class ProjectInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
+        //Khởi tạo bảng quyền mặc định
+        PermissionSchema permissionSchema;
+        for (PermissionSchemaSeed seed : PermissionSchemaData.DATA) {
+            if (permissionSchemaRepository.existsByCode(seed.getCode())) continue;
+
+            permissionSchema = new PermissionSchema();
+            permissionSchema.setCode(seed.getCode());
+            permissionSchema.setName(seed.getName());
+            permissionSchema.setIsActive(seed.getIsActive());
+            permissionSchema.setIsDefault(seed.getIsDefault());
+
+            permissionSchemaRepository.save(permissionSchema);
+        }
+
         //Khởi tạo role mặc định của dự án
         ProjectRole projectRole;
+        PermissionSchema permissionSchemaDefault = permissionSchemaRepository.findByCode("DEFAULT_SCHEMA");
         for (RoleSeed seed : RoleData.DATA) {
             if (projectRoleRepository.existsByCode(seed.getCode())) continue;
 
@@ -44,6 +59,7 @@ public class ProjectInitializer implements CommandLineRunner {
             projectRole.setName(seed.getName());
             projectRole.setIsActive(seed.getIsActive());
             projectRole.setIsDefault(seed.getIsDefault());
+            projectRole.setProjectShemaId(permissionSchemaDefault.getId());
 
             projectRoleRepository.save(projectRole);
         }
@@ -60,20 +76,6 @@ public class ProjectInitializer implements CommandLineRunner {
             projectPermission.setIsDefault(seed.getIsDefault());
 
             projectPermissionRepository.save(projectPermission);
-        }
-
-        //Khởi tạo bảng quyền mặc định
-        PermissionSchema permissionSchema;
-        for (PermissionSchemaSeed seed : PermissionSchemaData.DATA) {
-            if (permissionSchemaRepository.existsByCode(seed.getCode())) continue;
-
-            permissionSchema = new PermissionSchema();
-            permissionSchema.setCode(seed.getCode());
-            permissionSchema.setName(seed.getName());
-            permissionSchema.setIsActive(seed.getIsActive());
-            permissionSchema.setIsDefault(seed.getIsDefault());
-
-            permissionSchemaRepository.save(permissionSchema);
         }
 
         //Gán quyền vào vai trò mặc định

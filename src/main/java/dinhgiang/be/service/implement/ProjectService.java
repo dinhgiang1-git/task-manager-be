@@ -103,7 +103,9 @@ public class ProjectService implements IProjectService {
         Pageable pageable = PageRequest.of(pageSpring, pageSize);
 
         String keyword = (filter.getKeyword() != null) ? filter.getKeyword() : null;
-        Page<ProjectListResponse> page = projectRepository.getProjects(keyword, pageable);
+        String codeProjectRole = "MANAGER";
+        Page<ProjectListResponse> page = projectRepository.getProjects(keyword, codeProjectRole, pageable);
+
 
         PaginationResponse<ProjectListResponse> response = new PaginationResponse<>();
         response.setPageNow(pageNow);
