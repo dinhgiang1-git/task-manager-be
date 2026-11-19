@@ -53,6 +53,8 @@ public interface WorkItemRepository extends JpaRepository<WorkItem, Long> {
         AND (:keyword IS NULL
                       OR LOWER(wi.work_item_code) LIKE LOWER('%' || :keyword || '%')
                       OR LOWER(wi.title) LIKE LOWER('%' || :keyword || '%'))
+        AND (CAST(:isArchive AS boolean) IS NULL
+                      OR (wi.archived_at IS NOT NULL) = CAST(:isArchive AS boolean))
     """, countQuery = """
     SELECT
         COUNT(*)
@@ -63,10 +65,13 @@ public interface WorkItemRepository extends JpaRepository<WorkItem, Long> {
         WHERE wi.project_id = :projectId
         AND (:keyword IS NULL
                       OR LOWER(wi.work_item_code) LIKE LOWER('%' || :keyword || '%')
-                      OR LOWER(wi.title) LIKE LOWER('%' || :keyword || '%'))
+                      OR LOWER(wi.title) LIKE LOWER('%' || :keyword || '%'))    
+        AND (CAST(:isArchive AS boolean) IS NULL
+                      OR (wi.archived_at IS NOT NULL) = CAST(:isArchive AS boolean))
     """, nativeQuery = true)
     Page<WorkItemListResponse> page(
             @Param(value = "projectId") Long projectId,
+            @Param(value = "isArchive") Boolean isArchive,
             @Param(value = "keyword") String keyword,
             Pageable pageable);
 

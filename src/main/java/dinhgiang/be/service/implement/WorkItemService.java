@@ -1,6 +1,7 @@
 package dinhgiang.be.service.implement;
 
 import dinhgiang.be.exception.BusinessException;
+import dinhgiang.be.initializer.data.workitem.WorkItemCommentRequest;
 import dinhgiang.be.model.common.ApiResponse;
 import dinhgiang.be.model.common.PaginationRequest;
 import dinhgiang.be.model.common.PaginationResponse;
@@ -8,9 +9,7 @@ import dinhgiang.be.model.dto.request.workitem.MyWorkItemFilterRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemAssignRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemCreateRequest;
 import dinhgiang.be.model.dto.request.workitem.WorkItemFilterRequest;
-import dinhgiang.be.model.dto.response.workitem.MyWorkItemListResponse;
-import dinhgiang.be.model.dto.response.workitem.UpdateWorkItemStatusRequest;
-import dinhgiang.be.model.dto.response.workitem.WorkItemListResponse;
+import dinhgiang.be.model.dto.response.workitem.*;
 import dinhgiang.be.model.entity.account.Account;
 import dinhgiang.be.model.entity.project.Project;
 import dinhgiang.be.model.entity.workitem.*;
@@ -42,6 +41,7 @@ public class WorkItemService implements IWorkItemService {
     private final ProjectMemberRepository projectMemberRepository;
     private final WorkItemAssignmentRepository workItemAssignmentRepository;
     private final StatusCalculatorService statusCalculatorService;
+    private final WorkItemCommentRepository workItemCommentRepository;
 
     public ApiResponse<Void> createWorkItem(WorkItemCreateRequest request) {
         Project project = projectRepository.findById(request.getProjectId())
@@ -128,7 +128,8 @@ public class WorkItemService implements IWorkItemService {
         Pageable pageable = PageRequest.of(springPage, pageSize);
         Long projectId = filter.getProjectId();
         String keyword = filter.getKeyword();
-        Page<WorkItemListResponse> page = workItemRepository.page(projectId, keyword, pageable);
+        Boolean isArchive = filter.getIsArchive() ? true : null;
+        Page<WorkItemListResponse> page = workItemRepository.page(projectId, isArchive, keyword, pageable);
 
         List<WorkItemListResponse> treeData = buildTreeWorkItems(page.getContent());
 
@@ -291,5 +292,49 @@ public class WorkItemService implements IWorkItemService {
         return ApiResponse.success("Cập nhật traạng thái công việc thành công");
     }
 
+    //Lấy tất cả loại công việc
+    public ApiResponse<List<WorkItemTypeResponse>> getAllWorkItemTypes() {
+        List<WorkItemType> workItemTypes = workItemTypeRepository.findAllByIsDefaultAndIsActive(true, true);
+        List<WorkItemTypeResponse> responses = new ArrayList<>();
+        for (WorkItemType workItemType : workItemTypes) {
+            WorkItemTypeResponse workItemTypeRes = new WorkItemTypeResponse();
+            workItemTypeRes.setId(workItemType.getId());
+            workItemTypeRes.setCode(workItemType.getCode());
+            workItemTypeRes.setDescription(workItemType.getDescription());
+            workItemTypeRes.setIsActive(workItemType.getIsActive());
+            workItemTypeRes.setIsDefault(workItemType.getIsDefault());
+            responses.add(workItemTypeRes);
+        }
 
+        return ApiResponse.success(responses, "Lấy tất cả loại công việc thành công");
+    }
+
+    //Lấy tất cả trạng thái công việc
+    public ApiResponse<List<WorkItemStatusResponse>> getAllWorkItemStatuses() {
+        List<WorkItemStatusResponse> response = workItemStatusRepository.getAllWorkItemStatues();
+        return ApiResponse.success(response, "Lất tất cả trạng thái công việc thành công");
+    }
+
+    //Tạo comment WorkItem
+    public ApiResponse<Long> createWorkItemComment(WorkItemCommentRequest request) {
+        WorkItem workItem = workItemRepository.findById(request.getWorkItemId())
+                .orElseThrow(() -> new BusinessException("Công việc không tồn tại"));
+
+        WorkItemComment comment = new  WorkItemComment();
+        comment.setWorkItemId(request.getWorkItemId());
+        comment.setAuthorId(SecurityUtil.getRequireAccountId());
+        comment.setBody(request.getBody());
+        Long response = workItemCommentRepository.save(comment).getId();
+
+        return ApiResponse.success(response, "Tạo mới comment thành công");
+    }
+
+    public ApiResponse<List<WorkItemCommentResponse>> getWorkItemComment(Long workItemId) {
+        WorkItem workItem = workItemRepository.findById(workItemId)
+                .orElseThrow(() -> new BusinessException("Công việc không tồn tại"));
+
+        List<WorkItemCommentResponse> response = workItemCommentRepository.getWorkItemComments(workItemId);
+
+        return ApiResponse.success(response, "Lấy danh sách comment thành công");
+    }
 }
